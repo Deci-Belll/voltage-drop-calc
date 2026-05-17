@@ -29,6 +29,7 @@ class MainApplication(tk.Tk):
         self.main_frame.pack(fill=tk.BOTH, expand=True)
 
         self._setup_input_rows()
+        self._setup_output_area()
         self._setup_action_and_graph_area()
 
     def _setup_input_rows(self) -> None:
@@ -67,6 +68,54 @@ class MainApplication(tk.Tk):
             # (self.voltage_entry などでアクセス可能にする)
             setattr(self, attr_name, entry)
 
+    def _setup_output_area(self) -> None:
+        """計算結果表示用のエリアをセットアップ"""
+        # 計算結果表示用フレーム
+        self.result_frame = tk.LabelFrame(
+            self.main_frame,
+            text="計算結果",
+            padx=10,
+            pady=10,
+        )
+        self.result_frame.grid(
+            row=8,
+            column=0,
+            padx=5,
+            pady=10,
+            columnspan=2,
+            sticky=tk.EW,
+        )
+
+        # 結果表示用ラベル
+        self.voltage_drop_label = tk.Label(self.result_frame, text="電圧降下(V): -")
+        self.voltage_drop_rate_label = tk.Label(
+            self.result_frame,
+            text="電圧降下率(%): -",
+        )
+        self.voltage_drop_label.pack(anchor=tk.W)
+        self.voltage_drop_rate_label.pack(anchor=tk.W)
+
+        # 電線自動選定表示用フレーム
+        self.auto_select_frame = tk.LabelFrame(
+            self.main_frame,
+            text="電線自動選定",
+            padx=10,
+            pady=10,
+        )
+        self.auto_select_frame.grid(
+            row=9,
+            column=0,
+            padx=5,
+            pady=10,
+            columnspan=2,
+            sticky=tk.EW,
+        )
+        self.auto_select_label = tk.Label(
+            self.auto_select_frame,
+            text="電線断面積(mm2): -",
+        )
+        self.auto_select_label.pack(anchor=tk.W)
+
     def _setup_action_and_graph_area(self) -> None:
         """ボタンとグラフ描画エリアのセットアップ"""
         # 計算ボタン
@@ -77,7 +126,14 @@ class MainApplication(tk.Tk):
         # グラフ表示用フレーム
         # 入力項目の右側(column=2)に配置することでレイアウトを整理
         self.fig_frame = tk.Frame(self.main_frame, borderwidth=1, relief=tk.SUNKEN)
-        self.fig_frame.grid(row=0, column=2, padx=10, pady=5, rowspan=9, sticky=tk.NSEW)
+        self.fig_frame.grid(
+            row=0,
+            column=2,
+            padx=10,
+            pady=5,
+            rowspan=10,
+            sticky=tk.NSEW,
+        )
         tk.Label(self.fig_frame, text="[ここにグラフを表示]").pack(expand=True)
 
     def on_button_click(self) -> None:
