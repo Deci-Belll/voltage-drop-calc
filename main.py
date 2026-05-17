@@ -28,108 +28,66 @@ class MainApplication(tk.Tk):
         self.main_frame = tk.Frame(self, padx=10, pady=10)
         self.main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # サブフレーム
-        self.sub_frame_0 = tk.Frame(self.main_frame)
-        self.sub_frame_1_1 = tk.Frame(self.main_frame)
-        self.sub_frame_1_2 = tk.Frame(self.main_frame)
-        self.sub_frame_2_1 = tk.Frame(self.main_frame)
-        self.sub_frame_2_2 = tk.Frame(self.main_frame)
-        self.sub_frame_3_1 = tk.Frame(self.main_frame)
-        self.sub_frame_3_2 = tk.Frame(self.main_frame)
-        self.sub_frame_4_1 = tk.Frame(self.main_frame)
-        self.sub_frame_4_2 = tk.Frame(self.main_frame)
-        self.sub_frame_5_1 = tk.Frame(self.main_frame)
-        self.sub_frame_5_2 = tk.Frame(self.main_frame)
-        self.sub_frame_6_1 = tk.Frame(self.main_frame)
-        self.sub_frame_6_2 = tk.Frame(self.main_frame)
-        self.sub_frame_7 = tk.Frame(self.main_frame)
-        self.sub_frame_8 = tk.Frame(self.main_frame)
-        self.sub_frame_9 = tk.Frame(self.main_frame)
-        self.fig_frame = tk.Frame(self.main_frame)
+        self._setup_input_rows()
+        self._setup_action_and_graph_area()
 
-        # サブフレームの配置
-        self.sub_frame_0.grid(row=0, column=0, padx=5, pady=5, columnspan=2)
-        self.sub_frame_1_1.grid(row=1, column=0, padx=5, pady=5)
-        self.sub_frame_1_2.grid(row=1, column=1, padx=5, pady=5)
-        self.sub_frame_2_1.grid(row=2, column=0, padx=5, pady=5)
-        self.sub_frame_2_2.grid(row=2, column=1, padx=5, pady=5)
-        self.sub_frame_3_1.grid(row=3, column=0, padx=5, pady=5)
-        self.sub_frame_3_2.grid(row=3, column=1, padx=5, pady=5)
-        self.sub_frame_4_1.grid(row=4, column=0, padx=5, pady=5)
-        self.sub_frame_4_2.grid(row=4, column=1, padx=5, pady=5)
-        self.sub_frame_5_1.grid(row=5, column=0, padx=5, pady=5)
-        self.sub_frame_5_2.grid(row=5, column=1, padx=5, pady=5)
-        self.sub_frame_6_1.grid(row=6, column=0, padx=5, pady=5)
-        self.sub_frame_6_2.grid(row=6, column=1, padx=5, pady=5)
-        self.sub_frame_7.grid(row=7, column=0, padx=5, pady=5)
-        self.sub_frame_8.grid(row=8, column=0, padx=5, pady=5)
-        self.sub_frame_9.grid(row=9, column=0, padx=5, pady=5)
-        self.fig_frame.grid(row=0, column=1, padx=5, pady=5, columnspan=9)
+    def _setup_input_rows(self) -> None:
+        """入力項目(ラジオボタンおよび電圧・電流等のエントリ)のセットアップ"""
+        # 電源種別(ラジオボタン)
+        self.power_specs = tk.IntVar(value=0)
+        sf0 = tk.Frame(self.main_frame)
+        sf0.grid(row=0, column=0, padx=5, pady=5, columnspan=2)
+        for i, label in enumerate(["三相 AC", "単相 AC", "直流"]):
+            tk.Radiobutton(sf0, text=label, variable=self.power_specs, value=i).pack(
+                side=tk.LEFT,
+            )
 
-        # 各種ウィジェットの作成
-        # ラジオボタン
+        # 入力項目(ラベルとエントリ)の定義
+        fields = [
+            ("電圧(V):", "voltage_entry"),
+            ("電流(A):", "current_entry"),
+            ("電線断面積(mm2):", "wire_area_entry"),
+            ("電線長(m):", "wire_length_entry"),
+            ("電線本数(本):", "wire_count_entry"),
+            ("許容電圧降下率(%):", "voltage_drop_rate_entry"),
+        ]
 
-        power_specs = tk.IntVar()
-        rad1 = tk.Radiobutton(
-            self.sub_frame_0,
-            text="三相 AC",
-            variable=power_specs,
-            value=0,
-        )
-        rad1.pack(side=tk.LEFT)
-        rad2 = tk.Radiobutton(
-            self.sub_frame_0,
-            text="単相 AC",
-            variable=power_specs,
-            value=1,
-        )
-        rad2.pack(side=tk.LEFT)
-        rad3 = tk.Radiobutton(
-            self.sub_frame_0,
-            text="直流",
-            variable=power_specs,
-            value=2,
-        )
-        rad3.pack(side=tk.LEFT)
+        for i, (label_text, attr_name) in enumerate(fields, start=1):
+            # ラベル用フレーム(右寄せ)
+            f_lbl = tk.Frame(self.main_frame)
+            f_lbl.grid(row=i, column=0, padx=5, pady=2, sticky=tk.E)
+            tk.Label(f_lbl, text=label_text).pack(side=tk.LEFT)
 
-        # ラベルとエントリー
+            # エントリ用フレーム(左寄せ)
+            f_ent = tk.Frame(self.main_frame)
+            f_ent.grid(row=i, column=1, padx=5, pady=2, sticky=tk.W)
+            entry = tk.Entry(f_ent, justify=tk.RIGHT)
+            entry.pack(side=tk.LEFT)
+            # インスタンス変数として動的に登録
+            # (self.voltage_entry などでアクセス可能にする)
+            setattr(self, attr_name, entry)
 
-        label1 = tk.Label(self.sub_frame_1_1, text="電圧(V):")
-        voltage_entry = tk.Entry(self.sub_frame_1_2)
-        label1.pack(side=tk.LEFT)
-        voltage_entry.pack(side=tk.LEFT)
+    def _setup_action_and_graph_area(self) -> None:
+        """ボタンとグラフ描画エリアのセットアップ"""
+        # 計算ボタン
+        sf_btn = tk.Frame(self.main_frame)
+        sf_btn.grid(row=7, column=0, padx=5, pady=10, columnspan=2)
+        tk.Button(sf_btn, text="計算開始", command=self.on_button_click).pack()
 
-        label2 = tk.Label(self.sub_frame_2_1, text="電流(A):")
-        current_entry = tk.Entry(self.sub_frame_2_2)
-        label2.pack(side=tk.LEFT)
-        current_entry.pack(side=tk.LEFT)
-
-        label3 = tk.Label(self.sub_frame_3_1, text="電線断面積(mm2):")
-        wire_area_entry = tk.Entry(self.sub_frame_3_2)
-        label3.pack(side=tk.LEFT)
-        wire_area_entry.pack(side=tk.LEFT)
-
-        label4 = tk.Label(self.sub_frame_4_1, text="電線長(m):")
-        wire_length_entry = tk.Entry(self.sub_frame_4_2)
-        label4.pack(side=tk.LEFT)
-        wire_length_entry.pack(side=tk.LEFT)
-
-        label5 = tk.Label(self.sub_frame_5_1, text="電線本数(本):")
-        wire_count_entry = tk.Entry(self.sub_frame_5_2)
-        label5.pack(side=tk.LEFT)
-        wire_count_entry.pack(side=tk.LEFT)
-
-        label6 = tk.Label(self.sub_frame_6_1, text="許容電圧降下率(%):")
-        voltage_drop_rate_entry = tk.Entry(self.sub_frame_6_2)
-        label6.pack(side=tk.LEFT)
-        voltage_drop_rate_entry.pack(side=tk.LEFT)
-
-
+        # グラフ表示用フレーム
+        # 入力項目の右側(column=2)に配置することでレイアウトを整理
+        self.fig_frame = tk.Frame(self.main_frame, borderwidth=1, relief=tk.SUNKEN)
+        self.fig_frame.grid(row=0, column=2, padx=10, pady=5, rowspan=9, sticky=tk.NSEW)
+        tk.Label(self.fig_frame, text="[ここにグラフを表示]").pack(expand=True)
 
     def on_button_click(self) -> None:
         """ボタンが押されたときのイベントハンドラ"""
-        input_text = self.entry.get()
-        messagebox.showinfo("メッセージ", f"入力されたテキスト:\n{input_text}")
+        try:
+            # 例として電圧を取得して表示
+            voltage = self.voltage_entry.get()
+            messagebox.showinfo("計算開始", f"入力された電圧: {voltage}V")
+        except AttributeError:
+            messagebox.showerror("エラー", "ウィジェットが正しく初期化されていません。")
 
 
 # --- アプリケーションの起動 ---
