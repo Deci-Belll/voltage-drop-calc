@@ -36,17 +36,24 @@ class MainApplication(tk.Tk):
         """入力項目(ラジオボタンおよび電圧・電流等のエントリ)のセットアップ"""
         # 電源種別(プルダウン)
         self.power_specs = tk.StringVar(value="三相 AC")
-        sf0 = tk.Frame(self.main_frame)
-        sf0.grid(row=0, column=0, padx=5, pady=5, columnspan=2)
-        tk.Label(sf0, text="電源種別:").pack(side=tk.LEFT, padx=5)
+
+        # ラベル部分を column 0 (右寄せ) に配置
+        f_lbl_power = tk.Frame(self.main_frame)
+        f_lbl_power.grid(row=0, column=0, padx=5, pady=2, sticky=tk.E)
+        tk.Label(f_lbl_power, text="電源種別:").pack(side=tk.LEFT)
+
+        # コンボボックス部分を column 1 (左寄せ) に配置
+        f_ent_power = tk.Frame(self.main_frame)
+        f_ent_power.grid(row=0, column=1, padx=5, pady=2, sticky=tk.W)
         self.power_combo = ttk.Combobox(
-            sf0,
+            f_ent_power,
             textvariable=self.power_specs,
             values=["三相 AC", "単相 AC", "直流"],
             state="readonly",
-            width=15,
+            width=17,
         )
         self.power_combo.pack(side=tk.LEFT)
+
         # 値が変更されたときに _on_power_spec_change を呼び出す
         self.power_specs.trace_add("write", self._on_power_spec_change)
 
