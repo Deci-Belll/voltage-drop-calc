@@ -57,3 +57,33 @@ class VoltageDropCalculator:
         if r == 0:
             return self.v_drop_3p(current, sqr, length, num)
         return self.v_drop_dc(current, sqr, length, num)
+
+
+def plot_sqr(x: list[float], y: list[float], r: int, rate: float):
+    """電線の断面積と電圧降下率の関係をグラフ化し、Figureオブジェクトを返します。"""
+    import matplotlib as mpl
+    from matplotlib.figure import Figure
+
+    # Figureインスタンスを生成する
+    fig = Figure(figsize=(5, 4), dpi=100)
+    # メモリを内側にする
+    mpl.rcParams["xtick.direction"] = "in"
+    mpl.rcParams["ytick.direction"] = "in"
+
+    ax1 = fig.add_subplot(111)
+    ax1.yaxis.set_ticks_position("both")
+    ax1.yaxis.set_ticks_position("both")
+
+    ax1.set_xlabel("Cable sq (mm2)")
+    ax1.set_ylabel("Voltage drop (%)")
+    if r <= 1:
+        ax1.set_ylim(0, 7)
+        ax1.set_xlim(0, 120)
+    else:
+        ax1.set_ylim(0, 15)
+        ax1.set_xlim(0, 120)
+    ax1.plot(x, y, marker="o")
+    ax1.grid()
+    ax1.plot([0, 120], [rate, rate], color="red", linestyle="--")
+
+    return fig
