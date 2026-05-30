@@ -4,6 +4,9 @@
 それらに基づいた電圧降下および電圧降下率の計算を行います。
 """
 
+import matplotlib as mpl
+from matplotlib.figure import Figure
+
 # 電線抵抗(Ω/km)のデータ
 SQR = [1.5, 2.5, 4, 6, 10, 16, 25, 35, 50, 70, 95, 120, 150, 185]
 R20km = [
@@ -58,12 +61,31 @@ class VoltageDropCalculator:
             return self.v_drop_3p(current, sqr, length, num)
         return self.v_drop_dc(current, sqr, length, num)
 
+    def v_drop_rate(self, vd: float, voltage: float) -> float:
+        """電圧降下率を計算する関数"""
+        vd_rate = vd / voltage * 100
+        return vd_rate
 
-def plot_sqr(x: list[float], y: list[float], r: int, rate: float):
+    def auto_sqr(  # noqa: PLR0913
+        self,
+        r: int,
+        voltage: float,
+        current: float,
+        length: float,
+        num: int,
+        target_rate: float,
+    ) -> float:
+        """電線の断面積を自動選定する関数"""
+        for sqr in SQR:
+            vd = self.v_drop(r, current, sqr, length, num)
+            vd_rate = self.v_drop_rate(vd, voltage)
+            if vd_rate <= target_rate:
+                return sqr
+        return SQR[-1]  # 条件を満たす断面積がない場合は最大値を返す
+
+
+def plot_sqr(x: list[float], y: list[float], r: int, rate: float) -> Figure:
     """電線の断面積と電圧降下率の関係をグラフ化し、Figureオブジェクトを返します。"""
-    import matplotlib as mpl
-    from matplotlib.figure import Figure
-
     # Figureインスタンスを生成する
     fig = Figure(figsize=(5, 4), dpi=100)
     # メモリを内側にする
@@ -72,18 +94,22 @@ def plot_sqr(x: list[float], y: list[float], r: int, rate: float):
 
     ax1 = fig.add_subplot(111)
     ax1.yaxis.set_ticks_position("both")
-    ax1.yaxis.set_ticks_position("both")
 
     ax1.set_xlabel("Cable sq (mm2)")
     ax1.set_ylabel("Voltage drop (%)")
+
+    # 横軸の目盛りを電線サイズ(SQR)の各値に設定し、重ならないよう回転させる
+    ax1.set_xticks(x)
+    ax1.tick_params(axis="x", rotation=45, labelsize=9)
+
     if r <= 1:
         ax1.set_ylim(0, 7)
-        ax1.set_xlim(0, 120)
     else:
         ax1.set_ylim(0, 15)
-        ax1.set_xlim(0, 120)
+
+    ax1.set_xlim(left=0, right=max(x) + 10)
     ax1.plot(x, y, marker="o")
     ax1.grid()
-    ax1.plot([0, 120], [rate, rate], color="red", linestyle="--")
+    ax1.plot([0, max(x) + 10], [rate, rate], color="red", linestyle="--")
 
     return fig

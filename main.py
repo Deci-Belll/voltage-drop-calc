@@ -9,6 +9,8 @@ from tkinter import messagebox, ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
+import calculations
+
 
 class MainApplication(tk.Tk):
     """アプリケーションのメインウィンドウを表すクラス"""
@@ -19,7 +21,7 @@ class MainApplication(tk.Tk):
 
         # --- ウィンドウの基本設定 ---
         self.title("電圧降下計算")
-        self.geometry("800x600")
+        self.geometry("800x450")
         self.minsize(300, 200)
 
         # --- コンポーネント(ウィジェット)の作成 ---
@@ -188,7 +190,7 @@ class MainApplication(tk.Tk):
         self.canvas.get_tk_widget().pack(expand=True)
         # tk.Label(self.fig_frame, text="[ここにグラフを表示]").pack(expand=True)
 
-    def _on_power_spec_change(self, *argss: str) -> None:
+    def _on_power_spec_change(self, *_: str) -> None:
         """電源種別が変更された際に、適切な初期電圧を自動設定する"""
         if not hasattr(self, "voltage_entry"):
             return
@@ -205,11 +207,47 @@ class MainApplication(tk.Tk):
     def on_button_click(self) -> None:
         """ボタンが押されたときのイベントハンドラ"""
         try:
-            # 例として電圧を取得して表示
-            voltage = self.voltage_entry.get()
-            messagebox.showinfo("計算開始", f"入力された電圧: {voltage}V")
-        except AttributeError:
-            messagebox.showerror("エラー", "ウィジェットが正しく初期化されていません。")
+            # 入力値の取得と数値変換
+            v = float(self.voltage_entry.get())
+            i = float(self.current_entry.get())
+            sq = float(self.wire_area_entry.get())
+            length = float(self.wire_length_entry.get())
+            num = int(self.wire_count_entry.get())
+            target_rate = float(self.voltage_drop_rate_entry.get())
+
+            # 電源種別を数値に変換 (三相 AC: 0, その他: 1以上)
+            spec = self.power_specs.get()
+            r = 0 if spec == "三相 AC" else 1
+
+            # 計算実行
+            calc = calculations.VoltageDropCalculator()
+            vd = calc.v_drop(r, i, sq, length, num)
+            vdr = calc.v_drop_rate(vd, v)
+            auto_sq = calc.auto_sqr(r, v, i, length, num, target_rate)
+
+            # 結果の表示更新
+            self.voltage_drop_label.config(text=f"電圧降下(V): {vd:.2f}")
+            self.voltage_drop_rate_label.config(text=f"電圧降下率(%): {vdr:.2f}")
+            self.auto_select_label.config(text=f"電線断面積(mm2): {auto_sq}")
+
+            # グラフ用のデータ作成 (全断面積に対して計算)
+            x_data = calculations.SQR
+            y_data = [
+                calc.v_drop_rate(calc.v_drop(r, i, s, length, num), v) for s in x_data
+            ]
+
+            # グラフの更新
+            self.fig = calculations.plot_sqr(x_data, y_data, r, target_rate)
+
+            # 古いキャンバスを破棄して新しいキャンバスを描画
+            for widget in self.fig_frame.winfo_children():
+                widget.destroy()
+            self.canvas = FigureCanvasTkAgg(self.fig, self.fig_frame)
+            self.canvas.draw()
+            self.canvas.get_tk_widget().pack(expand=True)
+
+        except ValueError:
+            messagebox.showerror("入力エラー", "数値を正しく入力してください。")
 
 
 # --- アプリケーションの起動 ---
